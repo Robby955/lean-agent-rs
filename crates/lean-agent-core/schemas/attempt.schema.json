@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/attempt.schema.json",
+  "title": "Lean Agent Replay Attempt",
+  "description": "One bounded, single-span proof attempt for `lean-agent replay`.",
+  "type": "object",
+  "required": ["task_id", "allowed_edit", "replacement"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "attempt_id": { "type": "string", "default": "attempt" },
+    "allowed_edit": {
+      "type": "object",
+      "required": ["file", "start_line", "end_line"],
+      "properties": {
+        "file": { "type": "string" },
+        "start_line": { "type": "integer", "minimum": 1 },
+        "end_line": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "replacement": { "type": "string" },
+    "target_file": { "type": "string" },
+    "extra_edits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "start_line", "end_line", "replacement"],
+        "properties": {
+          "file": { "type": "string" },
+          "start_line": { "type": "integer", "minimum": 1 },
+          "end_line": { "type": "integer", "minimum": 1 },
+          "replacement": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "original_diagnostic": { "type": "object" },
+    "model": {
+      "type": "string",
+      "description": "Model the runner reported, when one was provided."
+    },
+    "prompt_hash": {
+      "type": "string",
+      "description": "Hash of the prompt that produced this attempt, for reproducibility."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form runner metadata carried through from eval."
+    }
+  },
+  "additionalProperties": false
+}

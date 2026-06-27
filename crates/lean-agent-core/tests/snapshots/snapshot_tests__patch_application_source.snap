@@ -1,0 +1,19 @@
+---
+source: crates/lean-agent-core/tests/snapshot_tests.rs
+expression: rewritten
+---
+import Init
+
+namespace Sample
+
+/-- A theorem left open. -/
+theorem foo (n : Nat) : n = n := by
+  rfl
+
+def bar : Nat := by
+  admit
+
+theorem baz : True := by
+  trivial
+
+end Sample

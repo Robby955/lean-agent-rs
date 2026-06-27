@@ -1,0 +1,58 @@
+---
+source: crates/lean-agent-core/tests/snapshot_tests.rs
+expression: bundle
+---
+{
+  "file": "Sample.lean",
+  "line": 7,
+  "total_lines": 15,
+  "declaration": {
+    "kind": "theorem",
+    "name": "foo",
+    "start_line": 6,
+    "end_line": 7,
+    "source": "theorem foo (n : Nat) : n = n := by\n  sorry"
+  },
+  "imports": [
+    "import Init"
+  ],
+  "surrounding": {
+    "start_line": 4,
+    "end_line": 9,
+    "target_line": 7,
+    "lines": [
+      {
+        "number": 4,
+        "text": "",
+        "is_target": false
+      },
+      {
+        "number": 5,
+        "text": "/-- A theorem left open. -/",
+        "is_target": false
+      },
+      {
+        "number": 6,
+        "text": "theorem foo (n : Nat) : n = n := by",
+        "is_target": false
+      },
+      {
+        "number": 7,
+        "text": "  sorry",
+        "is_target": true
+      },
+      {
+        "number": 8,
+        "text": "",
+        "is_target": false
+      },
+      {
+        "number": 9,
+        "text": "def bar : Nat := by",
+        "is_target": false
+      }
+    ]
+  },
+  "diagnostics": [],
+  "suggested_prompt": "You are editing a Lean 4 proof.\n\nFile: Sample.lean (line 7 of 15)\nDeclaration: theorem foo\n\nImports in scope:\nimport Init\n\nCurrent declaration:\ntheorem foo (n : Nat) : n = n := by\n  sorry\n\nCompiler diagnostics: none captured.\n\nTask: rewrite the declaration so the file compiles with no errors. Return only the corrected Lean source for this declaration. Keep the existing name and signature unless the error requires a change, and do not add imports unless they are needed.\n"
+}

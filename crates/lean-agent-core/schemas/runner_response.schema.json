@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/runner_response.schema.json",
+  "title": "Lean Agent Runner Response",
+  "description": "One attempt line a runner writes to stdout for one task in `lean-agent eval`. The runner supplies the proof text and provenance; the editable span, target file, and backing diagnostic are taken from the mined task.",
+  "type": "object",
+  "required": ["task_id", "replacement"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Task this reply answers. Advisory: pairing is positional, so eval keeps the sent task id and counts a mismatch."
+    },
+    "attempt_id": {
+      "type": "string",
+      "default": "attempt",
+      "description": "Identifier for this attempt."
+    },
+    "replacement": {
+      "type": "string",
+      "description": "New content for the task's editable span (line-based replacement)."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model the runner used, when reported."
+    },
+    "prompt_hash": {
+      "type": ["string", "null"],
+      "description": "Hash of the prompt the runner built. When omitted or null, eval substitutes a SHA-256 of the sent task line."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form runner metadata (cost, latency, sampling settings)."
+    }
+  },
+  "additionalProperties": false
+}

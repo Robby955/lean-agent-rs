@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/mine_task.schema.json",
+  "title": "Lean Agent Mine Task",
+  "description": "One replayable proof task pinned to a single editable span.",
+  "type": "object",
+  "required": [
+    "task_id",
+    "project",
+    "file",
+    "kind",
+    "line",
+    "column",
+    "imports",
+    "source_before",
+    "target_span",
+    "source_after",
+    "allowed_edit",
+    "instructions"
+  ],
+  "properties": {
+    "task_id": { "type": "string" },
+    "project": { "type": "string" },
+    "file": { "type": "string" },
+    "declaration": { "type": "object" },
+    "kind": { "enum": ["sorry", "admit", "error"] },
+    "line": { "type": "integer", "minimum": 1 },
+    "column": { "type": "integer", "minimum": 0 },
+    "imports": { "type": "array", "items": { "type": "string" } },
+    "source_before": { "type": "string" },
+    "target_span": {
+      "type": "object",
+      "required": ["start_line", "start_column", "end_line", "end_column", "text"],
+      "properties": {
+        "start_line": { "type": "integer", "minimum": 1 },
+        "start_column": { "type": "integer", "minimum": 0 },
+        "end_line": { "type": "integer", "minimum": 1 },
+        "end_column": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "source_after": { "type": "string" },
+    "diagnostic": { "type": "object" },
+    "goal_state": { "type": "string" },
+    "allowed_edit": {
+      "type": "object",
+      "required": ["file", "start_line", "end_line"],
+      "properties": {
+        "file": { "type": "string" },
+        "start_line": { "type": "integer", "minimum": 1 },
+        "end_line": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "instructions": { "type": "string" }
+  },
+  "additionalProperties": false
+}

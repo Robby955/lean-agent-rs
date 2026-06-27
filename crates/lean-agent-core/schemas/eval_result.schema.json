@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/eval_result.schema.json",
+  "title": "Lean Agent Eval Result",
+  "type": "object",
+  "required": ["task_id", "status", "elapsed_ms"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "status": { "enum": ["passed", "failed", "timed_out", "runner_error"] },
+    "compile_passed": { "type": "boolean" },
+    "elapsed_ms": { "type": "integer", "minimum": 0 },
+    "attempt": { "type": "string" },
+    "diagnostics": { "type": "array" },
+    "artifacts": { "type": "object" }
+  },
+  "additionalProperties": false
+}

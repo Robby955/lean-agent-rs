@@ -1,0 +1,30 @@
+---
+source: crates/lean-agent-core/tests/snapshot_tests.rs
+expression: diagnostics
+---
+[
+  {
+    "file": "Sample.lean",
+    "line": 6,
+    "column": 2,
+    "severity": "error",
+    "message": "Sample.lean:6:2: error: unsolved goals\ncase h\nn : Nat\n⊢ n = n + 0",
+    "goal_state": "case h\nn : Nat\n⊢ n = n + 0"
+  },
+  {
+    "file": "Sample.lean",
+    "line": 9,
+    "column": 0,
+    "severity": "warning",
+    "message": "Sample.lean:9:0: warning: declaration uses 'sorry'",
+    "goal_state": null
+  },
+  {
+    "file": "Sample.lean",
+    "line": 12,
+    "column": 10,
+    "severity": "error",
+    "message": "Sample.lean:12:10: error: type mismatch\n  rfl\nhas type\n  ?a = ?a : Prop\nbut is expected to have type\n  1 = 2 : Prop",
+    "goal_state": null
+  }
+]

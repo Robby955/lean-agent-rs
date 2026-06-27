@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/replay_result.schema.json",
+  "title": "Lean Agent Replay Result",
+  "description": "One result record emitted per attempt by `lean-agent replay`.",
+  "type": "object",
+  "required": [
+    "task_id",
+    "attempt_id",
+    "status",
+    "compile_passed",
+    "accepted",
+    "diagnostic_count",
+    "new_errors",
+    "resolved_original_error",
+    "regression",
+    "elapsed_ms"
+  ],
+  "$defs": {
+    "guard_status": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["passed", "skipped", "rejected"] },
+        "note": { "type": "string" },
+        "reason": { "$ref": "#/$defs/reject_reason" }
+      },
+      "additionalProperties": false
+    },
+    "reject_reason": {
+      "type": "object",
+      "required": ["guard"],
+      "properties": {
+        "guard": {
+          "enum": [
+            "statement_changed",
+            "statement_unverifiable",
+            "disallowed_axiom",
+            "axiom_check_failed",
+            "reverse_dep_failed",
+            "vacuous_claim"
+          ]
+        },
+        "declaration": { "type": "string" },
+        "before": { "type": "string" },
+        "after": { "type": "string" },
+        "offending": { "type": "array", "items": { "type": "string" } },
+        "axioms": { "type": "array", "items": { "type": "string" } },
+        "module": { "type": "string" },
+        "detail": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "task_id": { "type": "string" },
+    "attempt_id": { "type": "string" },
+    "status": {
+      "enum": ["passed", "rejected", "failed", "patch_refused", "timed_out", "runner_error"]
+    },
+    "compile_passed": { "type": "boolean" },
+    "accepted": { "type": "boolean" },
+    "diagnostic_count": { "type": "integer", "minimum": 0 },
+    "new_errors": { "type": "integer", "minimum": 0 },
+    "resolved_original_error": { "type": "boolean" },
+    "regression": { "type": "boolean" },
+    "elapsed_ms": { "type": "integer", "minimum": 0 },
+    "final_goal_state": { "type": "string" },
+    "guards": {
+      "type": "object",
+      "required": ["statement", "axioms", "reverse_dep", "negative_control"],
+      "properties": {
+        "statement": { "$ref": "#/$defs/guard_status" },
+        "axioms": { "$ref": "#/$defs/guard_status" },
+        "reverse_dep": { "$ref": "#/$defs/guard_status" },
+        "negative_control": { "$ref": "#/$defs/guard_status" }
+      },
+      "additionalProperties": false
+    },
+    "reject_reason": { "$ref": "#/$defs/reject_reason" },
+    "patch_error": { "type": "string" }
+  },
+  "additionalProperties": false
+}

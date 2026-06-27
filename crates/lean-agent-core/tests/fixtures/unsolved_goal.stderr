@@ -1,0 +1,4 @@
+Example.lean:7:4: error: unsolved goals
+case h
+n : Nat
+⊢ n = n

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/eval_task.schema.json",
+  "title": "Lean Agent Eval Task",
+  "type": "object",
+  "required": ["task_id", "file", "declaration", "prompt"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "file": { "type": "string" },
+    "declaration": { "type": "string" },
+    "prompt": { "type": "string" },
+    "expected_status": { "enum": ["passed", "failed"] },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

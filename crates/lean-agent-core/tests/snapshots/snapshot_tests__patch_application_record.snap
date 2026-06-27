@@ -1,0 +1,10 @@
+---
+source: crates/lean-agent-core/tests/snapshot_tests.rs
+expression: applied
+---
+{
+  "file": "Sample.lean",
+  "start_line": 7,
+  "end_line": 7,
+  "replaced_text": "  sorry"
+}

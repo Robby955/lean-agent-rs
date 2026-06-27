@@ -1,0 +1,39 @@
+---
+source: crates/lean-agent-core/tests/snapshot_tests.rs
+expression: tasks
+---
+[
+  {
+    "task_id": "Sample.foo:7",
+    "project": "demo",
+    "file": "Sample.lean",
+    "declaration": {
+      "kind": "theorem",
+      "name": "foo",
+      "start_line": 6,
+      "end_line": 7,
+      "source": "theorem foo (n : Nat) : n = n := by\n  sorry"
+    },
+    "kind": "sorry",
+    "line": 7,
+    "column": 2,
+    "imports": [
+      "import Init"
+    ],
+    "source_before": "import Init\n\nnamespace Sample\n\n/-- A theorem left open. -/\ntheorem foo (n : Nat) : n = n := by\n  ",
+    "target_span": {
+      "start_line": 7,
+      "start_column": 2,
+      "end_line": 7,
+      "end_column": 7,
+      "text": "sorry"
+    },
+    "source_after": "\n\ndef bar : Nat := by\n  admit\n\ntheorem baz : True := by\n  trivial\n\nend Sample\n",
+    "allowed_edit": {
+      "file": "Sample.lean",
+      "start_line": 7,
+      "end_line": 7
+    },
+    "instructions": "Replace only the target span with a Lean proof that compiles."
+  }
+]

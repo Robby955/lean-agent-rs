@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/your-handle/lean-agent-rs/schemas/trace_record.schema.json",
+  "title": "Lean Agent Trace Record",
+  "type": "object",
+  "required": ["record_type"],
+  "properties": {
+    "record_type": { "enum": ["file_trace"] }
+  },
+  "additionalProperties": true
+}

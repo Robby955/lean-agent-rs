@@ -1,0 +1,5 @@
+/target
+/.lake
+*.jsonl
+*.parquet
+.DS_Store

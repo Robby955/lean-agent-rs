@@ -1,0 +1,11 @@
+Sample.lean:6:2: error: unsolved goals
+case h
+n : Nat
+⊢ n = n + 0
+Sample.lean:9:0: warning: declaration uses 'sorry'
+Sample.lean:12:10: error: type mismatch
+  rfl
+has type
+  ?a = ?a : Prop
+but is expected to have type
+  1 = 2 : Prop

@@ -1,0 +1,36 @@
+[package]
+name = "lean-agent-core"
+version.workspace = true
+description = "Core library for tracing Lean 4 diagnostics and evaluating Lean theorem-proving agents."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "../../README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+camino.workspace = true
+chrono.workspace = true
+ignore.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+walkdir.workspace = true
+
+[dev-dependencies]
+insta = { version = "1.43", features = ["json"] }
+
+[lints]
+workspace = true
