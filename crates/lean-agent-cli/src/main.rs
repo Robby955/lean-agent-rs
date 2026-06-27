@@ -124,6 +124,11 @@ struct ContextArgs {
     /// Drop warning diagnostics from the bundle.
     #[arg(long)]
     no_warnings: bool,
+
+    /// Skip the goal probe: do not re-run Lean with the placeholder swapped for
+    /// `?_` to recover the goal at a `sorry`/`admit`.
+    #[arg(long)]
+    no_goal_probe: bool,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -331,6 +336,7 @@ async fn context(args: ContextArgs) -> anyhow::Result<()> {
         lake_root: args.lake_root.clone(),
         timeout: Duration::from_secs(args.timeout),
         include_warnings: !args.no_warnings,
+        goal_probe: !args.no_goal_probe,
     };
 
     let bundle = gather_context(&request, &options)

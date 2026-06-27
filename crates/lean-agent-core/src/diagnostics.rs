@@ -75,6 +75,44 @@ fn extract_goal_state(block: &str) -> Option<GoalState> {
     }
 }
 
+/// Recover a goal block from a diagnostic message the upstream parser did not
+/// tag, for example a `Tactic ... failed` error or an unsynthesized placeholder
+/// that still prints a turnstile.
+///
+/// The block is the turnstile (`⊢`) line plus the contiguous local-context lines
+/// directly above it, stopping at the first blank line above.
+#[must_use]
+pub fn goal_from_message(message: &str) -> Option<GoalState> {
+    let lines: Vec<&str> = message.lines().collect();
+    let goal_idx = lines
+        .iter()
+        .rposition(|line| line.trim_start().starts_with('⊢'))?;
+    let mut start = goal_idx;
+    while start > 0 && !lines[start - 1].trim().is_empty() {
+        start -= 1;
+    }
+    let block = lines[start..=goal_idx].join("\n");
+    let block = block.trim();
+    (!block.is_empty()).then(|| GoalState(block.to_owned()))
+}
+
+/// Pick the most relevant goal state out of a set of diagnostics.
+///
+/// A diagnostic whose `goal_state` was already parsed (an `unsolved goals`
+/// block) wins; otherwise the first diagnostic message carrying a turnstile is
+/// recovered with [`goal_from_message`].
+#[must_use]
+pub fn recover_goal(diagnostics: &[Diagnostic]) -> Option<GoalState> {
+    diagnostics
+        .iter()
+        .find_map(|d| d.goal_state.clone())
+        .or_else(|| {
+            diagnostics
+                .iter()
+                .find_map(|d| goal_from_message(&d.message))
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

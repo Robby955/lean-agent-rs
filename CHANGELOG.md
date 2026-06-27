@@ -6,6 +6,15 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `context` goal probe: when the plain trace recovers no goal at a `sorry`/`admit`
+  (the placeholder elaborates with only a warning), Lean is re-run in an isolated
+  copy with the placeholder swapped for `?_`, which prints the goal at that exact
+  position for the parser to recover. On by default; `--no-goal-probe` skips it.
+  This populates `goal_state` for placeholder bundles, which was previously empty.
+- `goal_probe` module with `splice_hole` (pure) and `probe_goal_state` (isolated
+  re-run), plus `recover_goal`/`goal_from_message` shared out of `diagnostics`.
+
 ### Fixed
 - Accept predicate, axiom guard: close two bypasses of the axiom whitelist.
   - Probe-output injection: the axiom set is now read from a probe bracketed by

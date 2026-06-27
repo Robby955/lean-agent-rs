@@ -29,6 +29,7 @@ pub mod diagnostics;
 pub mod discover;
 pub mod error;
 pub mod eval;
+pub mod goal_probe;
 pub mod mine;
 pub mod patch;
 pub mod process;
@@ -48,10 +49,11 @@ pub use context::{
     ContextBundle, ContextOptions, ContextRequest, Declaration, SourceLine, SourceWindow,
     build_context, collect_imports, detect_declaration, gather_context, parse_file_line_spec,
 };
-pub use diagnostics::parse_lean_diagnostics;
+pub use diagnostics::{goal_from_message, parse_lean_diagnostics, recover_goal};
 pub use discover::discover_lean_files;
 pub use error::{Error, Result};
 pub use eval::{EvalOptions, EvalSummary, RunnerResponse, run_eval};
+pub use goal_probe::{probe_goal_state, splice_hole};
 pub use mine::{
     AllowedEdit, MineKind, MineOptions, MineSummary, MineTask, TargetSpan, mine_errors,
     mine_placeholders, run_mine,

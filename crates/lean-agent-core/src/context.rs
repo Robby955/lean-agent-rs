@@ -11,10 +11,10 @@
 //! filesystem or spawning Lean.
 
 use crate::{
-    Diagnostic, GoalState, LeanFile, Provenance, Result, TraceConfig, capture_provenance,
-    run_lean_file,
+    Diagnostic, GoalState, LeanFile, MineKind, MineTask, Provenance, Result, TraceConfig,
+    capture_provenance, mine_placeholders, run_lean_file,
 };
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -102,6 +102,10 @@ pub struct ContextOptions {
     pub timeout: Duration,
     /// Keep warning diagnostics in the bundle.
     pub include_warnings: bool,
+    /// When the plain trace recovers no goal at a `sorry`/`admit`, re-run Lean
+    /// with the placeholder swapped for `?_` to print the goal. Needs the
+    /// toolchain, so it is a no-op unless `run_trace` is also set.
+    pub goal_probe: bool,
 }
 
 impl ContextOptions {
@@ -113,6 +117,7 @@ impl ContextOptions {
             lake_root,
             timeout: Duration::from_secs(60),
             include_warnings: true,
+            goal_probe: true,
         }
     }
 }
@@ -215,6 +220,10 @@ pub fn parse_file_line_spec(spec: &str) -> Result<(Utf8PathBuf, u32)> {
 }
 
 /// Read the file, optionally trace it once, and assemble a [`ContextBundle`].
+///
+/// When the plain trace recovers no goal at the target and `options.goal_probe`
+/// is set, a second Lean run with the placeholder swapped for `?_` recovers the
+/// goal (see [`crate::goal_probe`]) and the bundle is rebuilt with it.
 pub async fn gather_context(
     request: &ContextRequest,
     options: &ContextOptions,
@@ -231,12 +240,91 @@ pub async fn gather_context(
         (Vec::new(), None)
     };
 
-    Ok(build_context(
-        request,
-        &source,
-        &diagnostics,
-        provenance.as_ref(),
-    ))
+    let bundle = build_context_inner(request, &source, &diagnostics, provenance.as_ref(), None);
+
+    if bundle.goal_state.is_none() && options.run_trace && options.goal_probe {
+        if let Some(goal) = probe_target_goal(request, &source, options).await {
+            return Ok(build_context_inner(
+                request,
+                &source,
+                &diagnostics,
+                provenance.as_ref(),
+                Some(goal),
+            ));
+        }
+    }
+
+    Ok(bundle)
+}
+
+/// Run a goal probe for the placeholder at the bundle's target line.
+///
+/// Finds the `sorry`/`admit` placeholder at (or, failing that, inside the
+/// enclosing declaration of) the target line, then re-runs Lean with it swapped
+/// for `?_`. Returns `None` when there is no placeholder to probe or the probe
+/// recovers no goal.
+async fn probe_target_goal(
+    request: &ContextRequest,
+    source: &str,
+    options: &ContextOptions,
+) -> Option<GoalState> {
+    let lines: Vec<&str> = source.lines().collect();
+    let target_line = clamp_line(request.line, lines.len());
+    let declaration = detect_declaration(&lines, (target_line as usize).saturating_sub(1));
+
+    let task = find_placeholder(
+        &request.file,
+        source,
+        target_line,
+        declaration.as_ref(),
+        options.lake_root.as_path(),
+    )?;
+
+    let target_path = request.file.as_path();
+    let rel_file = target_path
+        .strip_prefix(options.lake_root.as_path())
+        .unwrap_or(target_path);
+
+    crate::goal_probe::probe_goal_state(
+        options.lake_root.as_path(),
+        rel_file,
+        &task.source_before,
+        &task.source_after,
+        options.timeout,
+    )
+    .await
+}
+
+/// Select the placeholder task to probe for the target line.
+///
+/// Prefers a placeholder on the target line itself; otherwise the first
+/// placeholder inside the enclosing declaration's line range. Both `sorry` and
+/// `admit` are considered.
+fn find_placeholder(
+    file: &LeanFile,
+    source: &str,
+    target_line: u32,
+    declaration: Option<&Declaration>,
+    lake_root: &Utf8Path,
+) -> Option<MineTask> {
+    let mut tasks: Vec<MineTask> = Vec::new();
+    for kind in [MineKind::Sorry, MineKind::Admit] {
+        tasks.extend(mine_placeholders(
+            file,
+            source,
+            kind,
+            "_goal_probe",
+            lake_root,
+        ));
+    }
+
+    if let Some(on_line) = tasks.iter().find(|task| task.line == target_line) {
+        return Some(on_line.clone());
+    }
+    let decl = declaration?;
+    tasks
+        .into_iter()
+        .find(|task| task.line >= decl.start_line && task.line <= decl.end_line)
 }
 
 /// Assemble a bundle from already-read source and optional trace results.
@@ -251,6 +339,20 @@ pub fn build_context(
     diagnostics: &[Diagnostic],
     provenance: Option<&Provenance>,
 ) -> ContextBundle {
+    build_context_inner(request, source, diagnostics, provenance, None)
+}
+
+/// Assemble a bundle, optionally overriding the goal with one a probe recovered.
+///
+/// `probed_goal` is used only when the diagnostics carry no goal of their own,
+/// so a live diagnostic always wins over a probe.
+fn build_context_inner(
+    request: &ContextRequest,
+    source: &str,
+    diagnostics: &[Diagnostic],
+    provenance: Option<&Provenance>,
+    probed_goal: Option<GoalState>,
+) -> ContextBundle {
     let lines: Vec<&str> = source.lines().collect();
     let total_lines = lines.len();
     let target_line = clamp_line(request.line, total_lines);
@@ -259,7 +361,8 @@ pub fn build_context(
     let imports = collect_imports(&lines);
     let declaration = detect_declaration(&lines, target_idx);
     let surrounding = build_window(&lines, target_idx, request.before, request.after);
-    let (selected, goal_state) = select_diagnostics(diagnostics, target_line);
+    let (selected, diag_goal) = select_diagnostics(diagnostics, target_line);
+    let goal_state = diag_goal.or(probed_goal);
 
     let suggested_prompt = build_prompt(
         request.file.as_path().as_str(),
@@ -464,30 +567,8 @@ fn select_diagnostics(all: &[Diagnostic], line: u32) -> (Vec<Diagnostic>, Option
     } else {
         on_line
     };
-    let goal = chosen
-        .iter()
-        .find_map(|d| d.goal_state.clone())
-        .or_else(|| chosen.iter().find_map(|d| goal_from_message(&d.message)));
+    let goal = crate::diagnostics::recover_goal(&chosen);
     (chosen, goal)
-}
-
-/// Recover a goal block from a diagnostic message that the upstream parser did
-/// not tag (for example a `Tactic ... failed` error that still prints `⊢`).
-///
-/// The block is the turnstile line plus the contiguous local-context lines
-/// directly above it, stopping at the first blank line.
-fn goal_from_message(message: &str) -> Option<GoalState> {
-    let lines: Vec<&str> = message.lines().collect();
-    let goal_idx = lines
-        .iter()
-        .rposition(|line| line.trim_start().starts_with('⊢'))?;
-    let mut start = goal_idx;
-    while start > 0 && !lines[start - 1].trim().is_empty() {
-        start -= 1;
-    }
-    let block = lines[start..=goal_idx].join("\n");
-    let block = block.trim();
-    (!block.is_empty()).then(|| GoalState(block.to_owned()))
 }
 
 /// Assemble the ready-to-paste prompt from the bundle's parts.
